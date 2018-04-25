@@ -12,3 +12,4 @@ def etf_p(*args):
     price=data[data.tick==int(ticks)]
     return price
 print(etf_p())
+a=1
