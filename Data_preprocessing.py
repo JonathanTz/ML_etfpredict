@@ -15,25 +15,25 @@ all_data['close_1']=all_data.close.shift(-1)
 all_data['open_1']=all_data.open.shift(-1)
 all_data=all_data[:-1]
 labeltest=[]
-for i in range(len(all_data)-5):
+for i in range(len(all_data)):
     ##two class
-##    if all_data.close.shift(-1)[i]/all_data.open.shift(-1)[i]>1.005:
-##       labeltest.append([1,0])
-##    elif all_data.close.shift(-1)[i]/all_data.open.shift(-1)[i]<0.995:
-##        labeltest.append([0,1])
-##    else:
-##        labeltest.append([0,0])
+    if all_data.close.shift(-1)[i]/all_data.open.shift(-1)[i]>1.005:
+       labeltest.append([1,0,0])
+    elif all_data.close.shift(-1)[i]/all_data.open.shift(-1)[i]<0.995:
+        labeltest.append([0,1,0])
+    else:
+        labeltest.append([0,0,1])
 
     #five class
-    f1=(all_data['close_1'][i]/all_data['open_1'][i]>1)*1
-    f2=(all_data['close_1'][i+1]/all_data['open_1'][i+1]>1)*1
-    f3=(all_data['close_1'][i+2]/all_data['open_1'][i+2]>1)*1
-    f4=(all_data['close_1'][i+3]/all_data['open_1'][i+3]>1)*1
-    f5=(all_data['close_1'][i+4]/all_data['open_1'][i+4]>1)*1
-    labeltest.append([f1,f2,f3,f4,f5])
+##    f1=(all_data['close_1'][i]/all_data['open_1'][i]>1)*1
+##    f2=(all_data['close_1'][i+1]/all_data['open_1'][i+1]>1)*1
+##    f3=(all_data['close_1'][i+2]/all_data['open_1'][i+2]>1)*1
+##    f4=(all_data['close_1'][i+3]/all_data['open_1'][i+3]>1)*1
+##    f5=(all_data['close_1'][i+4]/all_data['open_1'][i+4]>1)*1
+##    labeltest.append([f1,f2,f3,f4,f5])
 
-##all_data['label']=pd.Series(labeltest,index=all_data.index)
-all_data['label']=pd.Series(labeltest,index=all_data.index[:-5])
+all_data['label']=pd.Series(labeltest,index=all_data.index)
+##all_data['label']=pd.Series(labeltest,index=all_data.index[:-5])
 
 
 #random sample

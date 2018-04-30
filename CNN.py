@@ -7,7 +7,7 @@ import matplotlib.image as mpimg
 
 class CNN:
     #nclass=the class of y_label
-    def __init__ (self,nclass=5,batch_size=5,keep_rate=0.8):
+    def __init__ (self,nclass=3,batch_size=5,keep_rate=0.8):
         self.nclass=nclass
         self.batch_size=batch_size
         self.keep_rate=keep_rate
@@ -47,8 +47,10 @@ class CNN:
         fc = tf.nn.relu(tf.matmul(fc, weights['W_fc1']) + biases['b_fc1'])
         fc = tf.nn.relu(tf.matmul(fc, weights['W_fc2']) + biases['b_fc2'])
         fc = tf.nn.dropout(fc, self.keep_rate)
+        ##output is softmax originally ,but trying relu activation 
         output = tf.nn.softmax(tf.matmul(fc, weights['out']) + biases['out'])
-        tf.Print(output,[tf.argmax(output,1)],'argmax(out)=')
+        #tf.Print(output,[tf.argmax(output,1)],'argmax(out)=')
+        
         return output
 
     def train_neural_network(self,x,y):
@@ -81,8 +83,11 @@ class CNN:
                                     i += self.batch_size
                                     
                             print ('Epoch', epoch, 'completed out of', hm_epochs, 'loss:', epoch_loss)
-                            #out=tf.Print(prediction,[tf.argmax(prediction,1)],'argmax(out)=',summarize=20,first_n=7)
-                            #print(out)
+                            out=prediction
+                            print(out.eval(feed_dict={x:test_x}))
+                            out1=tf.argmax(test_y,1)
+                            print((out1.eval(feed_dict={x:test_x})))
+                            
                             loss,acc=sess.run([cost,accuracy],feed_dict = {x: np.array(test_x), y: np.array(test_y)})
                             epoch_list.append(epoch)
                             loss_list.append(loss)
@@ -102,6 +107,6 @@ class CNN:
 
 train_x, train_y, test_x, test_y = data_processing()
 x = tf.placeholder('float',[None,8,20,3])
-y_label = tf.placeholder('float',shape=[None,5])
+y_label = tf.placeholder('float',shape=[None,3])
 test_cnn = CNN()
 test_cnn.train_neural_network(x,y_label)

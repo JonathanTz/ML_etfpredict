@@ -27,4 +27,3 @@ def get_data(idx):
       return tick_data
 
 
-show=get_data(1)
