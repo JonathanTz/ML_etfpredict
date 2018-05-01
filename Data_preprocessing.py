@@ -13,13 +13,14 @@ from Get_Data import get_data
 all_data=get_data(1)
 all_data['close_1']=all_data.close.shift(-1)
 all_data['open_1']=all_data.open.shift(-1)
+all_data['stdev']=(all_data.close-all_data.open)/all_data.open
 all_data=all_data[:-1]
 labeltest=[]
 for i in range(len(all_data)):
     ##two class
-    if all_data.close.shift(-1)[i]/all_data.open.shift(-1)[i]>1.005:
+    if all_data.close.shift(-1)[i]/all_data.open.shift(-1)[i]>(all_data.stdev.quantile(.55)+1.000):
        labeltest.append([1,0,0])
-    elif all_data.close.shift(-1)[i]/all_data.open.shift(-1)[i]<0.995:
+    elif all_data.close.shift(-1)[i]/all_data.open.shift(-1)[i]<(all_data.stdev.quantile(.45)+1.000):
         labeltest.append([0,1,0])
     else:
         labeltest.append([0,0,1])
@@ -34,7 +35,7 @@ for i in range(len(all_data)):
 
 all_data['label']=pd.Series(labeltest,index=all_data.index)
 ##all_data['label']=pd.Series(labeltest,index=all_data.index[:-5])
-
+all_data['volatility']=np.std([1,2,3])
 
 #random sample
 def sample_suffling(sample_x,sample_y,length=20):

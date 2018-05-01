@@ -83,10 +83,16 @@ class CNN:
                                     i += self.batch_size
                                     
                             print ('Epoch', epoch, 'completed out of', hm_epochs, 'loss:', epoch_loss)
-                            out=prediction
-                            print(out.eval(feed_dict={x:test_x}))
-                            out1=tf.argmax(test_y,1)
-                            print((out1.eval(feed_dict={x:test_x})))
+
+
+                            
+                            #print(prediction.eval(feed_dict={x:test_x[-10:]}))
+                            #out1=tf.argmax(test_y,1)
+                            #print((prediction.eval(feed_dict={x:test_x})))
+
+                           
+                            
+
                             
                             loss,acc=sess.run([cost,accuracy],feed_dict = {x: np.array(test_x), y: np.array(test_y)})
                             epoch_list.append(epoch)
@@ -97,7 +103,10 @@ class CNN:
                     global dt1
                     global dt2
                     global dt3
-
+                    global predict_label
+                    ###show predict value
+                    predict_label=(sess.run(tf.argmax(prediction,1),feed_dict={x:test_x}))
+                    print(predict_label)
 
                     dt1=epoch_list
                     dt2=loss_list
