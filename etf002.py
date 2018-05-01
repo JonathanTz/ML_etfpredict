@@ -12,19 +12,23 @@ from sklearn.learning_curve import learning_curve #使用learning_curve模組來
 from sklearn.svm import SVR #導入支持向量機模型
 from sklearn import preprocessing #要進行標準化則要先導入這個套件
 import matplotlib.pyplot as plt #導入畫圖模組
+from datetime import datetime
 
 
 #資料處理
-df = pd.read_csv('tw0050.csv', encoding='big5')
+df = pd.read_csv('tw00500427.csv', encoding='big5')
 df.columns = ['tick','date','name','open','high','low','close','volume']
-df.index = df['date']
-df = df.set_index('date') #轉成DatetimeIndex
-df_close = df['close'] #先將收盤價提出來
 df.drop('tick', axis=1, inplace=True) #刪掉不需要的columns，使用inplace參數確實刪除
 df.drop('name', axis=1, inplace=True) #刪掉不需要的columns，使用inplace參數確實刪除
-df.drop('close', axis=1, inplace=True) #刪掉不需要的columns，使用inplace參數確實刪除
-df_data = df.values #將df直接換成dataset的矩陣
-
+df_close = df['close'] #先將收盤價提出來
+df['DateTime'] = df['date'].apply(lambda x: pd.to_datetime(str(x), format='%Y%m%d'))
+df.index = df['DateTime']
+df.drop('date', axis=1, inplace=True) #刪掉不需要的columns，使用inplace參數確實刪除
+df.drop('DateTime', axis=1, inplace=True) #刪掉不需要的columns，使用inplace參數確實刪除
+df = df.resample('W').ohlc() #轉成週資料
+df = df.dropna(axis=0, how='any') #去除na值
+#df_data = df.values #將df直接換成dataset的矩陣
+'''
 #模型建構
 
 X = df_data
@@ -34,13 +38,13 @@ y = df_close
 X = preprocessing.scale(X)
 
 
-X_train, X_test, y_train, y_test = train_test_split(X,y,test_size = 0.3) #記得要放test_size
+X_train, X_test, y_train, y_test = train_test_split(X,y,test_size = 0.1	) #記得要放test_size
 model = SVR() #機器學習的模型是使用SVC
 model.fit(X_train, y_train) #放入訓練的data，用fit訓練
 model.predict(X_test) #考試囉
 #print(y_test) #對答案
 print(model.score(X_test, y_test)) #測分數囉
-
+'''
 
 
 
