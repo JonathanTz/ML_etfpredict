@@ -27,4 +27,4 @@ def get_data(idx):
       return tick_data
 
 
-a=
+
