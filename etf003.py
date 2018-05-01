@@ -20,9 +20,12 @@ df.columns = ['tick','date','name','open','high','low','close','volume']
 df.index = df['date']
 df = df.set_index('date') #轉成DatetimeIndex
 df_close = df['close'] #先將收盤價提出來
+df['close'] = df['close'].shift(1)
+df=df.drop(df.index[0])
+df_close=df_close.drop(df_close.index[0])
+
 df.drop('tick', axis=1, inplace=True) #刪掉不需要的columns，使用inplace參數確實刪除
 df.drop('name', axis=1, inplace=True) #刪掉不需要的columns，使用inplace參數確實刪除
-df.drop('close', axis=1, inplace=True) #刪掉不需要的columns，使用inplace參數確實刪除
 df_data = df.values #將df直接換成dataset的矩陣
 
 #模型建構
@@ -30,8 +33,9 @@ df_data = df.values #將df直接換成dataset的矩陣
 X = df_data
 y = df_close
 
+
 train_sizes, train_loss, test_loss = learning_curve(
-        SVR(gamma=0.001), X, y, cv=10, scoring = 'mean_squared_error',
+        SVR(gamma=0.001), X, y, cv=10, scoring = 'neg_mean_squared_error',
         train_sizes = [0.1, 0.25, 0.5, 0.75, 1])
     
         #learning輸入為(1.model, 2.X(學習樣本), 3.y(答案),
@@ -74,7 +78,7 @@ plt.plot(train_sizes, test_loss_mean, '-o', color="g", label="CrossValidation")
 plt.xlabel("Traning Example")
 plt.ylabel("Loss")
 plt.legend() #讓圖例生效，前面有註明限的label名稱這個才會有效→↑
-plt.show
+plt.show()
 
 #調整SVC,odel的gamma值來改變學習曲線效果，進而觀察overfitting狀況
 #http://blog.csdn.net/szlcw1/article/details/52336824 SVC參數介紹
