@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 import datetime as dt
-
+##if modify this function ,plz delete the .pickle in your directory
 fileNo={1:'taetfp',2:'tasharep',3:'tetfp',4:'tsharep'}
 def get_data(idx):
       ##check whether pickle exist
