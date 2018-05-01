@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 import datetime as dt
-
+##if modify this function ,plz delete the .pickle in your directory
 fileNo={1:'taetfp',2:'tasharep',3:'tetfp',4:'tsharep'}
 def get_data(idx):
       ##check whether pickle exist
@@ -11,7 +11,7 @@ def get_data(idx):
             data.columns=['tick','date','name','open','high','low','close','volume']
             ##remove space and comma in column
             data.name=pd.DataFrame([(lambda x:data.name[x].strip())(x) for x in range(len(data.name))])
-            data.volume=pd.DataFrame([(lambda x:data.volume[x].replace(',','').strip())(x) for x in range(len(data.volume))])
+            data.volume=pd.DataFrame([(lambda x:int(data.volume[x].replace(',','').strip()))(x) for x in range(len(data.volume))])
             ##set date column to datetimeindexindex
             data.date=pd.DataFrame([(lambda x:dt.datetime.strptime(str(data.date[x]),"%Y%m%d"))(x) for x in range(len(data))])
             data=data.set_index(['date'])
@@ -27,4 +27,4 @@ def get_data(idx):
       return tick_data
 
 
-show=get_data(1)
+
