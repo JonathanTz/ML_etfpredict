@@ -30,6 +30,9 @@ df_data = df.values #將df直接換成dataset的矩陣
 X = df_data
 y = df_close
 
+#特徵處理
+X = preprocessing.scale(X)
+
 
 X_train, X_test, y_train, y_test = train_test_split(X,y,test_size = 0.3) #記得要放test_size
 model = SVR() #機器學習的模型是使用SVC

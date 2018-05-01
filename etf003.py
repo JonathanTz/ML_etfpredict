@@ -20,12 +20,9 @@ df.columns = ['tick','date','name','open','high','low','close','volume']
 df.index = df['date']
 df = df.set_index('date') #轉成DatetimeIndex
 df_close = df['close'] #先將收盤價提出來
-df['close'] = df['close'].shift(1)
-df=df.drop(df.index[0])
-df_close=df_close.drop(df_close.index[0])
-
 df.drop('tick', axis=1, inplace=True) #刪掉不需要的columns，使用inplace參數確實刪除
 df.drop('name', axis=1, inplace=True) #刪掉不需要的columns，使用inplace參數確實刪除
+df.drop('close', axis=1, inplace=True) #刪掉不需要的columns，使用inplace參數確實刪除
 df_data = df.values #將df直接換成dataset的矩陣
 
 #模型建構
@@ -33,9 +30,11 @@ df_data = df.values #將df直接換成dataset的矩陣
 X = df_data
 y = df_close
 
+#特徵處理
+X = preprocessing.scale(X)
 
 train_sizes, train_loss, test_loss = learning_curve(
-        SVR(gamma=0.001), X, y, cv=10, scoring = 'neg_mean_squared_error',
+        SVR(), X, y, cv=10, scoring = 'mean_squared_error',
         train_sizes = [0.1, 0.25, 0.5, 0.75, 1])
     
         #learning輸入為(1.model, 2.X(學習樣本), 3.y(答案),
@@ -53,21 +52,6 @@ test_loss_mean = -np.mean(test_loss, axis=1)
 #axis為設定矩陣運算時所需要的參數，
 #記得若是運算誤差值時，要加負號，才會變正的。
 #train_loss算出來是一個5*5的矩陣
-"""
-#小筆記 np.mean的參數設定:
-    #在矩陣運算時，做加減乘除是常麻煩的，所以當有矩陣需要用運算時，使用numpy是
-    #可以減少許多步驟，但注意使用上的參數設定 axis
-    
-import numpy as np
-test = [[10,2,30],
-        [4,5,6],
-        [70,8,90]]
-print(np.mean(test,axis=0))
-print(np.mean(test,axis=1))
-
-#把註解解開就可以使用，當axis=0時 會將每一"行"的值做平均，在輸出矩陣，
-                #而當axis=1時 會將每一"列"的值做平均，在輸出矩陣。                
-"""
 #print(train_loss)
 #print(train_loss_mean)
 
@@ -78,7 +62,7 @@ plt.plot(train_sizes, test_loss_mean, '-o', color="g", label="CrossValidation")
 plt.xlabel("Traning Example")
 plt.ylabel("Loss")
 plt.legend() #讓圖例生效，前面有註明限的label名稱這個才會有效→↑
-plt.show()
+plt.show
 
 #調整SVC,odel的gamma值來改變學習曲線效果，進而觀察overfitting狀況
 #http://blog.csdn.net/szlcw1/article/details/52336824 SVC參數介紹
