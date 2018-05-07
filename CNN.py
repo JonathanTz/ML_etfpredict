@@ -114,7 +114,7 @@ class CNN:
                     #print ('Accuracy:' ,accuracy.eval({x:test_x, y:test_y}))
 
 
-train_x, train_y, test_x, test_y = data_processing()
+train_x, train_y, test_x, test_y = data_processing(shu=0,shift=1)
 x = tf.placeholder('float',[None,8,20,3])
 y_label = tf.placeholder('float',shape=[None,3])
 test_cnn = CNN()

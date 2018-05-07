@@ -16,16 +16,20 @@ all_data['open_1']=all_data.open.shift(-1)
 all_data['stdev']=(all_data.close-all_data.open)/all_data.open
 all_data=all_data[:-1]
 labeltest=[]
-for i in range(len(all_data)):
-    ##two class
-    if all_data.close.shift(-1)[i]/all_data.open.shift(-1)[i]>(all_data.stdev.quantile(.55)+1.000):
-       labeltest.append([1,0,0])
-    elif all_data.close.shift(-1)[i]/all_data.open.shift(-1)[i]<(all_data.stdev.quantile(.45)+1.000):
-        labeltest.append([0,1,0])
-    else:
-        labeltest.append([0,0,1])
+def cal_label(shift_no=1):
+    
+    for i in range(len(all_data)):
+        ##two class
+        if all_data.close.shift(-shift_no)[i]/all_data.open.shift(-shift_no)[i]>(all_data.stdev.quantile(.55)+1.000):
+           labeltest.append([1,0,0])
+        elif all_data.close.shift(-shift_no)[i]/all_data.open.shift(-shift_no)[i]<(all_data.stdev.quantile(.45)+1.000):
+            labeltest.append([0,1,0])
+        else:
+            labeltest.append([0,0,1])
+    all_data['label']=pd.Series(labeltest,index=all_data.index)
+    all_data['volatility']=np.std([1,2,3])
 
-    #five class
+#five class
 ##    f1=(all_data['close_1'][i]/all_data['open_1'][i]>1)*1
 ##    f2=(all_data['close_1'][i+1]/all_data['open_1'][i+1]>1)*1
 ##    f3=(all_data['close_1'][i+2]/all_data['open_1'][i+2]>1)*1
@@ -33,12 +37,11 @@ for i in range(len(all_data)):
 ##    f5=(all_data['close_1'][i+4]/all_data['open_1'][i+4]>1)*1
 ##    labeltest.append([f1,f2,f3,f4,f5])
 
-all_data['label']=pd.Series(labeltest,index=all_data.index)
-##all_data['label']=pd.Series(labeltest,index=all_data.index[:-5])
-all_data['volatility']=np.std([1,2,3])
 
+##all_data['label']=pd.Series(labeltest,index=all_data.index[:-5])
 #random sample
-def sample_suffling(sample_x,sample_y,length=20):
+def sample_suffling(sample_x,sample_y,length=20,if_shuffle=1):
+    
     fset=[]
     sample_len=len(sample_x)-length
     
@@ -47,8 +50,8 @@ def sample_suffling(sample_x,sample_y,length=20):
         min_max_scaler=preprocessing.MinMaxScaler()
         sample_x_chunk=min_max_scaler.fit_transform(sample_x_chunk)
         fset.append([sample_x_chunk,sample_y[i+length]])
-
-    random.shuffle(fset)
+    if if_shuffle==1:
+        random.shuffle(fset)
 
     return fset
 def sample_visualizing(sample_x):
@@ -71,7 +74,8 @@ def sample_visualizing(sample_x):
 
 
 ##calculate indicator and preprocessing
-def data_processing(test_size=0.05):
+def data_processing(test_size=0.05,shu=1,shift=1):
+    cal_label(shift)
     all_data['ma5']=all_data.close.rolling(window=5).mean()
     all_data['ma20']=all_data.close.rolling(window=20).mean()
     all_data['ma60']=all_data.close.rolling(window=60).mean()
@@ -80,7 +84,7 @@ def data_processing(test_size=0.05):
     df_X=all_data[['open','high','low','close','volume','ma5','ma20','ma60']]
     df_y=all_data['label']
     #random sample
-    datasets=sample_suffling(df_X,df_y)
+    datasets=sample_suffling(df_X,df_y,if_shuffle=shu)
     datasets=np.array(datasets)
     testing_size=int(test_size*len(datasets))
     #split sample to two sample
