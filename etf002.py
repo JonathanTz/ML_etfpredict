@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Mon Apr 30 19:49:38 2018
-
 @author: user
 """
 
@@ -26,10 +25,11 @@ df.index = df['DateTime']
 df_close = df['close'] #先將收盤價提出來
 df.drop('date', axis=1, inplace=True) #刪掉不需要的columns，使用inplace參數確實刪除
 df.drop('DateTime', axis=1, inplace=True) #刪掉不需要的columns，使用inplace參數確實刪除
-df = df.resample('W-MON').mean() #轉成週資料
+df = df.resample('W-SUN').mean() #轉成週資料 用MON會吃到下禮拜的
 df = df.dropna(axis=0, how='any') #去除na值
 df.drop('close', axis=1, inplace=True) #刪掉不需要的columns，使用inplace參數確實刪除
-df_data = df.values #將df直接換成dataset的矩陣
+df.drop(df.index[0],inplace=True) #把第一列資料刪除
+#df_data = df.values #將df直接換成dataset的矩陣
 
 df_close_MON = df_close.resample('W-MON').ffill()
 df_close_TUE = df_close.resample('W-TUE').ffill()
@@ -46,35 +46,38 @@ df_target = pd.DataFrame({
                     'Friday':df_close_FRI
                     })
 
-print(df_target)
+#print(df_target)
 ##creat dataframe with all date in sample period
-raw_date=pd.DataFrame(index=pd.date_range('1/7/2013','5/3/2018'))
-merge_date=pd.concat([df,df_target],axis=1)
+raw_date = pd.DataFrame(index=pd.date_range('1/7/2013','5/3/2018'))
+merge_date = pd.concat([raw_date,df_target],axis=1)
 ##add a column record dayofweek
 merge_date['day_week']=merge_date.index.dayofweek
 ##refresh date from dayofweek=0 to dayofweek=4
-start=merge_date[merge_date.day_week==0].index[0].date()
-end=merge_date[merge_date.day_week==4].index[len(merge_date[merge_date.day_week==4])-1].date()
-merge_date=merge_date[start:end]
+start = merge_date[merge_date.day_week==0].index[0].date()
+end = merge_date[merge_date.day_week==4].index[len(merge_date[merge_date.day_week==4])-1].date()
+merge_date = merge_date[start:end]
 
-all_data=pd.concat([merge_date['Monday'].reset_index(drop=True),
+all_data = pd.concat([merge_date['Monday'].reset_index(drop=True),
                     merge_date['Tuesday'].shift(-1).reset_index(drop=True),
                     merge_date['Wednesday'].shift(-2).reset_index(drop=True),
                     merge_date['Thursday'].shift(-3).reset_index(drop=True),
                     merge_date['Friday'].shift(-4).reset_index(drop=True),
                     ],axis=1)
-all_data.index=merge_date['Monday'].index
-all_data=all_data.dropna(axis=0,how='all')
+all_data.index = merge_date['Monday'].index
+all_data = all_data.dropna(axis=0,how='all')
+#all_data = all_data.values
+
+#特徵資料製作
+
+
+
+
 '''
 #模型建構
-
 X = df_data
 y = df_close
-
 #特徵處理
 X = preprocessing.scale(X)
-
-
 X_train, X_test, y_train, y_test = train_test_split(X,y,test_size = 0.1	) #記得要放test_size
 model = SVR() #機器學習的模型是使用SVC
 model.fit(X_train, y_train) #放入訓練的data，用fit訓練
@@ -82,14 +85,3 @@ model.predict(X_test) #考試囉
 #print(y_test) #對答案
 print(model.score(X_test, y_test)) #測分數囉
 '''
-
-
-
-
-
-
-
-
-
-
-
