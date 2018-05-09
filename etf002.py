@@ -6,11 +6,11 @@ Created on Mon Apr 30 19:49:38 2018
 
 import pandas as pd
 import numpy as np
-#from sklearn.cross_validation import train_test_split
+from sklearn.cross_validation import train_test_split
 #from sklearn.model_selection import train_test_split #新的import方法，上面的好像要被除掉?
-#from sklearn.learning_curve import learning_curve #使用learning_curve模組來可視化機器學習過程
-#from sklearn.svm import SVR #導入支持向量機模型
-#from sklearn import preprocessing #要進行標準化則要先導入這個套件
+from sklearn.learning_curve import learning_curve #使用learning_curve模組來可視化機器學習過程
+from sklearn.svm import SVR #導入支持向量機模型
+from sklearn import preprocessing #要進行標準化則要先導入這個套件
 import matplotlib.pyplot as plt #導入畫圖模組
 from datetime import datetime
 
@@ -28,8 +28,8 @@ df.drop('DateTime', axis=1, inplace=True) #刪掉不需要的columns，使用inp
 df = df.resample('W-SUN').mean() #轉成週資料 用MON會吃到下禮拜的
 df = df.dropna(axis=0, how='any') #去除na值
 df.drop('close', axis=1, inplace=True) #刪掉不需要的columns，使用inplace參數確實刪除
-df.drop(df.index[0],inplace=True) #把第一列資料刪除
-#df_data = df.values #將df直接換成dataset的矩陣
+df.drop(df.index[0], inplace=True) #把第一列資料刪除
+df_data = df.values #將df直接換成dataset的矩陣
 
 df_close_MON = df_close.resample('W-MON').ffill()
 df_close_TUE = df_close.resample('W-TUE').ffill()
@@ -65,23 +65,41 @@ all_data = pd.concat([merge_date['Monday'].reset_index(drop=True),
                     ],axis=1)
 all_data.index = merge_date['Monday'].index
 all_data = all_data.dropna(axis=0,how='all')
-#all_data = all_data.values
+
+all_data.drop(all_data.index[5], inplace=True) #刪除過年資料 2013
+all_data.drop(all_data.index[110], inplace=True) #刪除過年資料 2015
+all_data.drop(all_data.index[159], inplace=True) #刪除過年資料 2016
+
+all_data = all_data.values #矩陣化
 
 #特徵資料製作
 
 
 
-
-'''
 #模型建構
 X = df_data
-y = df_close
+y = all_data
 #特徵處理
 X = preprocessing.scale(X)
-X_train, X_test, y_train, y_test = train_test_split(X,y,test_size = 0.1	) #記得要放test_size
+X_train, X_test, y_train, y_test = train_test_split(X,y,test_size = 0.3	) #記得要放test_size
+#y_train = np.argmax(y_train, axis=1)
 model = SVR() #機器學習的模型是使用SVC
 model.fit(X_train, y_train) #放入訓練的data，用fit訓練
 model.predict(X_test) #考試囉
 #print(y_test) #對答案
 print(model.score(X_test, y_test)) #測分數囉
-'''
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
