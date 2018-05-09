@@ -13,6 +13,7 @@ from sklearn.svm import SVR #導入支持向量機模型
 from sklearn import preprocessing #要進行標準化則要先導入這個套件
 import matplotlib.pyplot as plt #導入畫圖模組
 from datetime import datetime
+from sklearn.linear_model import LinearRegression #import線性回歸
 
 
 #資料處理
@@ -77,12 +78,15 @@ all_data = all_data.values #矩陣化
 
 
 #模型建構
-X = df_data
-y = all_data
+#製作訓練組、測試組
+X_train = df_data[0:273,:] 
+y_train = all_data[0:273,:]
+X_test = df_data[273] #留最後一周，預測用
+y_test = all_data[273]
 #特徵處理
-X = preprocessing.scale(X)
-X_train, X_test, y_train, y_test = train_test_split(X,y,test_size = 0.3	) #記得要放test_size
-#y_train = np.argmax(y_train, axis=1)
+X_train = preprocessing.scale(X_train)
+X_test = preprocessing.scale(X_test)
+
 model = SVR() #機器學習的模型是使用SVC
 model.fit(X_train, y_train) #放入訓練的data，用fit訓練
 model.predict(X_test) #考試囉
