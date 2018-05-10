@@ -33,20 +33,20 @@ df.drop(df.index[0], inplace=True) #把第一列資料刪除
 df_data = df.values #將df直接換成dataset的矩陣
 ##
 ret=(abs((df_close-df_close.shift(1))/df_close.shift(1)))[1:]  #drop first nan row
-def getXY(dt,n=5): #split x & y
+def getXY(dt,n=20): #split x & y,n=20 is rooliing window size
     dt=dt.values
     x_data=[]
     y_data=[]
     i=0
-    while i <(len(dt)-(len(dt)%n)):
+    while i <(len(dt)-n):
         x_data.append(dt[i:i+n])
         y_data.append(dt[i+n])
-        i=i+n
+        i=i+1
     return (x_data,y_data)
 from sklearn.model_selection import train_test_split
-x_val,y_val=getXY(df_close[-11:]) #預留樣本最後測試
+x_val,y_val=getXY(df_close[-25:]) #預留樣本最後測試
 
-x,y=getXY(df_close[:-11])
+x,y=getXY(df_close[:-25])
 model = SVR(kernel='linear')
 x_train,x_test,y_train,y_test=train_test_split(x,y,test_size=0.3)
 model.fit(x_train, y_train)
