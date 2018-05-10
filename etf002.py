@@ -31,79 +31,109 @@ df = df.dropna(axis=0, how='any') #去除na值
 df.drop('close', axis=1, inplace=True) #刪掉不需要的columns，使用inplace參數確實刪除
 df.drop(df.index[0], inplace=True) #把第一列資料刪除
 df_data = df.values #將df直接換成dataset的矩陣
+##
+ret=(abs((df_close-df_close.shift(1))/df_close.shift(1)))[1:]  #drop first nan row
+def getXY(dt,n=5): #split x & y
+    dt=dt.values
+    x_data=[]
+    y_data=[]
+    i=0
+    while i <(len(dt)-(len(dt)%n)):
+        x_data.append(dt[i:i+n])
+        y_data.append(dt[i+n])
+        i=i+n
+    return (x_data,y_data)
+from sklearn.model_selection import train_test_split
+x_val,y_val=getXY(df_close[-11:]) #預留樣本最後測試
 
-df_close_MON = df_close.resample('W-MON').ffill()
-df_close_TUE = df_close.resample('W-TUE').ffill()
-df_close_WED = df_close.resample('W-WED').ffill()
-df_close_THU = df_close.resample('W-THU').ffill()
-df_close_FRI = df_close.resample('W-FRI').ffill()
+x,y=getXY(df_close[:-11])
+model = SVR(kernel='linear')
+x_train,x_test,y_train,y_test=train_test_split(x,y,test_size=0.3)
+model.fit(x_train, y_train)
+predict=model.predict(x_test)
 
-                        
-df_target = pd.DataFrame({
-                    'Monday':df_close_MON,
-                    'Tuesday':df_close_TUE,
-                    'Wednesday':df_close_WED,
-                    'Thursday':df_close_THU ,
-                    'Friday':df_close_FRI
-                    })
+plt.scatter(predict,y_test,s=2)
+plt.xlabel('Predict')
+plt.ylabel('Actual')
+plt.show()
+print(model.score(x_test, y_test))
+print(model.predict(x_val))
+print(y_val)
+##
 
-#print(df_target)
-##creat dataframe with all date in sample period
-raw_date = pd.DataFrame(index=pd.date_range('1/7/2013','5/3/2018'))
-merge_date = pd.concat([raw_date,df_target],axis=1)
-##add a column record dayofweek
-merge_date['day_week']=merge_date.index.dayofweek
-##refresh date from dayofweek=0 to dayofweek=4
-start = merge_date[merge_date.day_week==0].index[0].date()
-end = merge_date[merge_date.day_week==4].index[len(merge_date[merge_date.day_week==4])-1].date()
-merge_date = merge_date[start:end]
-
-all_data = pd.concat([merge_date['Monday'].reset_index(drop=True),
-                    merge_date['Tuesday'].shift(-1).reset_index(drop=True),
-                    merge_date['Wednesday'].shift(-2).reset_index(drop=True),
-                    merge_date['Thursday'].shift(-3).reset_index(drop=True),
-                    merge_date['Friday'].shift(-4).reset_index(drop=True),
-                    ],axis=1)
-all_data.index = merge_date['Monday'].index
-all_data = all_data.dropna(axis=0,how='all')
-
-all_data.drop(all_data.index[5], inplace=True) #刪除過年資料 2013
-all_data.drop(all_data.index[110], inplace=True) #刪除過年資料 2015
-all_data.drop(all_data.index[159], inplace=True) #刪除過年資料 2016
-
-all_data = all_data.values #矩陣化
-
-#特徵資料製作
-
-
-
-#模型建構
-#製作訓練組、測試組
-X_train = df_data[0:273,:] 
-y_train = all_data[0:273,:]
-X_test = df_data[273] #留最後一周，預測用
-y_test = all_data[273]
-#特徵處理
-X_train = preprocessing.scale(X_train)
-X_test = preprocessing.scale(X_test)
-
-model = SVR() #機器學習的模型是使用SVC
-model.fit(X_train, y_train) #放入訓練的data，用fit訓練
-model.predict(X_test) #考試囉
-#print(y_test) #對答案
-print(model.score(X_test, y_test)) #測分數囉
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+##
+##df_close_MON = df_close.resample('W-MON').ffill()
+##df_close_TUE = df_close.resample('W-TUE').ffill()
+##df_close_WED = df_close.resample('W-WED').ffill()
+##df_close_THU = df_close.resample('W-THU').ffill()
+##df_close_FRI = df_close.resample('W-FRI').ffill()
+##
+##                        
+##df_target = pd.DataFrame({
+##                    'Monday':df_close_MON,
+##                    'Tuesday':df_close_TUE,
+##                    'Wednesday':df_close_WED,
+##                    'Thursday':df_close_THU ,
+##                    'Friday':df_close_FRI
+##                    })
+##
+###print(df_target)
+####creat dataframe with all date in sample period
+##raw_date = pd.DataFrame(index=pd.date_range('1/7/2013','5/3/2018'))
+##merge_date = pd.concat([raw_date,df_target],axis=1)
+####add a column record dayofweek
+##merge_date['day_week']=merge_date.index.dayofweek
+####refresh date from dayofweek=0 to dayofweek=4
+##start = merge_date[merge_date.day_week==0].index[0].date()
+##end = merge_date[merge_date.day_week==4].index[len(merge_date[merge_date.day_week==4])-1].date()
+##merge_date = merge_date[start:end]
+##
+##all_data = pd.concat([merge_date['Monday'].reset_index(drop=True),
+##                    merge_date['Tuesday'].shift(-1).reset_index(drop=True),
+##                    merge_date['Wednesday'].shift(-2).reset_index(drop=True),
+##                    merge_date['Thursday'].shift(-3).reset_index(drop=True),
+##                    merge_date['Friday'].shift(-4).reset_index(drop=True),
+##                    ],axis=1)
+##all_data.index = merge_date['Monday'].index
+##all_data = all_data.dropna(axis=0,how='all')
+##
+##all_data.drop(all_data.index[5], inplace=True) #刪除過年資料 2013
+##all_data.drop(all_data.index[110], inplace=True) #刪除過年資料 2015
+##all_data.drop(all_data.index[159], inplace=True) #刪除過年資料 2016
+##
+##all_data = all_data.values #矩陣化
+##
+###特徵資料製作
+##
+##
+##
+###模型建構
+###製作訓練組、測試組
+##X_train = df_data[0:273,:] 
+##y_train = all_data[0:273,:]
+##X_test = df_data[273] #留最後一周，預測用
+##y_test = all_data[273]
+###特徵處理
+##X_train = preprocessing.scale(X_train)
+##X_test = preprocessing.scale(X_test)
+##
+##model = SVR() #機器學習的模型是使用SVC
+##model.fit(X_train, y_train) #放入訓練的data，用fit訓練
+##model.predict(X_test) #考試囉
+###print(y_test) #對答案
+##print(model.score(X_test, y_test)) #測分數囉
+##
+##
+##
+##
+##
+##
+##
+##
+##
+##
+##
+##
+##
+##
+##
