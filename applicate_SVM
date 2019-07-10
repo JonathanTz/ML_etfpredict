@@ -1,0 +1,774 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "![alt text](./images/reflogo3.png \"Title\")\n",
+    "\n",
+    "<div align=\"center\">\n",
+    "    <h2>Support Vector Machine Model on High Frequency Data</h2>\n",
+    "    <h3>Radha Pendyala</h3>\n",
+    "</div>\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Loading the relevant libraries"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import pandas as pd\n",
+    "import os\n",
+    "import numpy as np\n",
+    "import ta\n",
+    "from functools import reduce\n",
+    "from sklearn.metrics import mean_squared_error,mean_absolute_error\n",
+    "from sklearn.preprocessing import StandardScaler\n",
+    "from sklearn.model_selection import GridSearchCV\n",
+    "from sklearn.model_selection import train_test_split\n",
+    "from sklearn.pipeline import Pipeline\n",
+    "from sklearn.svm import LinearSVR\n",
+    "from sklearn.svm import SVR\n",
+    "import warnings\n",
+    "warnings.filterwarnings('ignore')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>RIC</th>\n",
+       "      <th>sz</th>\n",
+       "      <th>cat</th>\n",
+       "      <th>name</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>1299.HK</td>\n",
+       "      <td>66651456.0</td>\n",
+       "      <td>L</td>\n",
+       "      <td>AIA Group Ltd</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "       RIC          sz cat           name\n",
+       "0  1299.HK  66651456.0   L  AIA Group Ltd"
+      ]
+     },
+     "execution_count": 2,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "tickers = pd.read_csv(\"./data/SVM-Model/sample-rics-Large-Cap.csv\")\n",
+    "tickers.head(1)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Read Tick Data for AIA Group Ltd"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 10,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>RIC</th>\n",
+       "      <th>dtime</th>\n",
+       "      <th>PRICE</th>\n",
+       "      <th>VOLUME</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>1299.HK</td>\n",
+       "      <td>2018-11-01 01:00:01.225585</td>\n",
+       "      <td>59.35</td>\n",
+       "      <td>177000.0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>1299.HK</td>\n",
+       "      <td>2018-11-01 01:00:01.226024</td>\n",
+       "      <td>59.35</td>\n",
+       "      <td>1000.0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>1299.HK</td>\n",
+       "      <td>2018-11-01 01:00:01.226024</td>\n",
+       "      <td>59.35</td>\n",
+       "      <td>30800.0</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "       RIC                       dtime  PRICE    VOLUME\n",
+       "0  1299.HK  2018-11-01 01:00:01.225585  59.35  177000.0\n",
+       "1  1299.HK  2018-11-01 01:00:01.226024  59.35    1000.0\n",
+       "2  1299.HK  2018-11-01 01:00:01.226024  59.35   30800.0"
+      ]
+     },
+     "execution_count": 10,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "sample_ric  = tickers.RIC.iloc[0]\n",
+    "sample_file = os.path.join(\"./data/SVM-Model/\", sample_ric+\".csv\")\n",
+    "sample_data = pd.read_csv(sample_file)\n",
+    "sample_data.head(3)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Handling multiple trades at same time stamp"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 11,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "sample_data.dtime  = pd.to_datetime(sample_data.dtime)\n",
+    "sample_data        = sample_data.assign(trade_date = sample_data.dtime.dt.date)\n",
+    "sample_data        = pd.concat([sample_data.groupby('dtime')['PRICE'].mean(), sample_data.groupby('dtime')['VOLUME'].sum() ] , axis=1)\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Considering the data only between trading hours and excluding auction trades"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 12,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "sample_data        = sample_data.assign(hr = sample_data.index.hour)\n",
+    "sample_data        = sample_data[sample_data.hr.isin([1,2,3,5,6,7])]\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Computing OHLC"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 13,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "sample_data_ohlc   = sample_data['PRICE'].resample('1Min').ohlc()\n",
+    "sample_data_ohlc        = sample_data_ohlc.assign(hr = sample_data_ohlc.index.hour)\n",
+    "sample_data_ohlc        = sample_data_ohlc[sample_data_ohlc.hr.isin([1,2,3,5,6,7])]\n",
+    "sample_data_ohlc = sample_data_ohlc.ffill()\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Computing Volume at 1m min intervals"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 14,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "sample_data_vol   = sample_data['VOLUME'].resample('1Min').sum()\n",
+    "sample_data       = pd.concat([sample_data_ohlc, sample_data_vol], axis=1)\n",
+    "sample_data       = sample_data.dropna()\n",
+    "sample_data_ohlc  = sample_data_ohlc.dropna()\n",
+    "sample_data_ohlc = sample_data_ohlc.assign(vol=sample_data_ohlc['close'].pct_change().rolling(90).std())\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Computing next minute prices based on random walk"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 15,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "rnd = np.random.RandomState(2019)\n",
+    "sample_data_ohlc = sample_data_ohlc.assign(rwalk = sample_data_ohlc.apply(lambda x : x['close']*(1.+rnd.normal(0,x['vol'])), axis=1))\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Computing Technical Indicators"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 16,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "high    = sample_data_ohlc['high']\n",
+    "low     = sample_data_ohlc['low']\n",
+    "close   = sample_data_ohlc['close']\n",
+    "\n",
+    "## Simple Moving Average\n",
+    "sample_data_sma  = close.rolling(10).mean()\n",
+    "\n",
+    "## Weighted Moving Average\n",
+    "wt               = np.arange(1,11)/sum(np.arange(1,11))\n",
+    "sample_data_wma  = close.rolling(10,min_periods=10).apply(lambda x: np.dot(x,wt))\n",
+    "\n",
+    "###############################################################################\n",
+    "#                             Momentum Indicators                             #\n",
+    "###############################################################################\n",
+    "## Awesome Oscillator(AO)\n",
+    "sample_data_ao  = ta.momentum.ao(high, low, s = 5, len=34)\n",
+    "\n",
+    "## RSI\n",
+    "sample_data_rsi  = ta.rsi(close, n = 10)\n",
+    "\n",
+    "## Stochastic Oscillator(SR)\n",
+    "sample_data_stoc = ta.momentum.stoch(sample_data_ohlc['high'], low, close, n= 10)\n",
+    "\n",
+    "## Stochastic Oscillator Signal(SO signal)\n",
+    "sample_data_stoc_sig = ta.momentum.stoch_signal(high, low, close, n= 14,d_n=3)\n",
+    "\n",
+    "## True strength index (TSI)\n",
+    "sample_data_tsi = ta.momentum.tsi(close, r = 25, s = 13)\n",
+    "\n",
+    "## Ultimate Oscillator(UO)\n",
+    "sample_data_uo = ta.momentum.uo(high, low, close, s=7, m=14, len=28, ws=4.0, wm=2.0, wl=1.0)\n",
+    "\n",
+    "## Williams %R(WR)\n",
+    "sample_data_wr = ta.momentum.wr(high, low, close, lbp=14, fillna=False)\n",
+    "\n",
+    "\n",
+    "###############################################################################\n",
+    "#                            Volatility Indicators                            #\n",
+    "###############################################################################\n",
+    "## Average Trading Range\n",
+    "sample_data_atr            = ta.volatility.average_true_range(high, low, close, n= 10)\n",
+    "\n",
+    "## Bollinger Bands (BB)\n",
+    "sample_data_bol_h          = ta.volatility.bollinger_hband(close,  n=20, ndev=2)\n",
+    "sample_data_bol_hind       = ta.volatility.bollinger_hband_indicator(close,  n=20, ndev=2)\n",
+    "sample_data_bol_l          = ta.volatility.bollinger_lband(close,  n=20, ndev=2)\n",
+    "sample_data_bol_lind       = ta.volatility.bollinger_lband_indicator(close,  n=20, ndev=2)\n",
+    "\n",
+    "## Donchian channel (DC)\n",
+    "sample_data_donchian_h     = ta.volatility.donchian_channel_hband(close, n=20)\n",
+    "sample_data_donchian_hind  = ta.volatility.donchian_channel_hband_indicator(close, n=20)\n",
+    "sample_data_donchian_l     = ta.volatility.donchian_channel_lband(close, n=20)\n",
+    "sample_data_donchian_lind  = ta.volatility.donchian_channel_lband_indicator(close, n=20)\n",
+    "\n",
+    "## Keltner channel (KC)\n",
+    "sample_data_keltner        = ta.volatility.keltner_channel_central(high, low, close, n=10)\n",
+    "sample_data_keltner_h      = ta.volatility.keltner_channel_hband(high, low, close, n=10)\n",
+    "sample_data_keltner_hind   = ta.volatility.keltner_channel_hband_indicator(high, low, close, n=10)\n",
+    "\n",
+    "sample_data_keltner_l      = ta.volatility.keltner_channel_lband(high, low, close, n=10)\n",
+    "sample_data_keltner_lind   = ta.volatility.keltner_channel_lband_indicator(high, low, close, n=10)\n",
+    "\n",
+    "###############################################################################\n",
+    "#                               Trend Indicators                              #\n",
+    "###############################################################################\n",
+    "## Average Directional Movement Index (ADX)\n",
+    "sample_data_aroon_down  = ta.trend.aroon_down(close, n=25)\n",
+    "sample_data_aroon_up    = ta.trend.aroon_up(close, n=25)\n",
+    "sample_data_dpo         = ta.trend.dpo(close, n=20)\n",
+    "sample_data_ichimoku    = ta.trend.ichimoku_a(high, low, n1=9, n2=26, visual=False)\n",
+    "sample_data_ichimoku_b  = ta.trend.ichimoku_b(high, low, n2=26, n3=52, visual=False)\n",
+    "sample_data_kst         = ta.trend.kst(close, r1=10, r2=15, r3=20, r4=30, n1=10, n2=10, n3=10, n4=15)\n",
+    "sample_data_kst_sig     = ta.trend.kst_sig(close, r1=10, r2=15, r3=20, r4=30, n1=10, n2=10, n3=10, n4=15, nsig=9)\n",
+    "sample_data_macd        = ta.trend.macd(close, n_fast=12, n_slow=26)\n",
+    "sample_data_macd_diff   = ta.trend.macd_diff(close, n_fast=12, n_slow=26, n_sign=9)\n",
+    "sample_data_macd_signal = ta.trend.macd_signal(close, n_fast=12, n_slow=26, n_sign=9)\n",
+    "sample_data_mass_index  = ta.trend.mass_index(high, low, n=9, n2=25)\n",
+    "sample_data_trix        = ta.trend.trix(close, n=15)\n",
+    "sample_data_vortex_neg  = ta.trend.vortex_indicator_neg(high, low, close, n=14)\n",
+    "sample_data_vortex_pos  = ta.trend.vortex_indicator_pos(high, low, close, n=14)\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Collating all the relevant features for SVM Model"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 22,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "temp_dfs                =  [sample_data_ao, sample_data_rsi, sample_data_stoc, sample_data_stoc_sig, sample_data_tsi, \n",
+    "                            sample_data_uo, sample_data_wr, sample_data_atr, sample_data_bol_h, sample_data_bol_hind, \n",
+    "                            sample_data_bol_l, sample_data_bol_lind, sample_data_donchian_h, sample_data_donchian_hind, \n",
+    "                            sample_data_donchian_l, sample_data_donchian_lind, sample_data_keltner ,sample_data_keltner_h, \n",
+    "                            sample_data_keltner_hind, sample_data_keltner_l, sample_data_keltner_lind, sample_data_aroon_down,\n",
+    "                            sample_data_aroon_up, sample_data_dpo, sample_data_ichimoku, \n",
+    "                            sample_data_ichimoku_b, sample_data_kst, sample_data_kst_sig, sample_data_macd, \n",
+    "                            sample_data_macd_diff, sample_data_macd_signal,sample_data_mass_index, sample_data_trix, \n",
+    "                            sample_data_vortex_neg, sample_data_vortex_pos]\n",
+    "temp_df          = reduce(lambda left,right: pd.merge(left,right,left_index=True, right_index=True), temp_dfs)\n",
+    "ta_columns       = [\"ao\", \"rsi\", \"stoc\", \"stoc_sig\", \"tsi\", \"uo\", \"wr\", \"atr\", \"bol_h\", \"bol_hind\",\n",
+    "                    \"bol_l\", \"bol_lind\", \"donchian_h\", \"donchian_hind\", \"donchian_l\",\n",
+    "                    \"donchian_lind\", \"keltner\", \"keltner_h\", \"keltner_hind\", \"keltner_l\", \"keltner_lind\",\n",
+    "                     \"aroon_down\", \"aroon_up\", \"dpo\", \"ichimoku_a\",\n",
+    "                    \"ichimoku_b\", \"kst\", \"kst_sig\", \"macd\", \"macd_diff\", \"macd_signal\",\n",
+    "                    \"mass_index\", \"trix\", \"vortex_neg\", \"vortex_pos\"]\n",
+    "temp_df.columns  = ta_columns\n",
+    "sample_data_svm  = pd.merge(temp_df, sample_data_ohlc[['close','rwalk']],left_index=True, right_index=True)\n",
+    "sample_data_svm  = sample_data_svm.dropna()\n",
+    "sample_data_svm  = sample_data_svm.assign(next_price = sample_data_svm.close.shift(1))\n",
+    "sample_data_svm  = sample_data_svm.assign(next_rwalk = sample_data_svm.rwalk.shift(1))\n",
+    "sample_data_svm = sample_data_svm.dropna()\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Splitting the data in test and training samples"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 23,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "X   = sample_data_svm[ta_columns]\n",
+    "y   = sample_data_svm[['next_price']]\n",
+    "y_rwalk = sample_data_svm[['next_rwalk']]\n",
+    "X_train, X_test, y_train, y_test,y_rwalk_train, y_rwalk_test  = train_test_split(X,y,y_rwalk, test_size=0.2 ,\n",
+    "                                                    random_state = 2019)\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Defining various pipelines for fitting various SVM models"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 24,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "svm_pipe_linear    = Pipeline(((\"scaler\", StandardScaler()) ,\n",
+    "                                  (\"svr\",LinearSVR())))\n",
+    "\n",
+    "svm_pipe_rbf       = Pipeline(((\"scaler\", StandardScaler()) ,\n",
+    "                               (\"svr\",SVR(kernel=\"rbf\") )))\n",
+    "\n",
+    "svm_pipe_poly      = Pipeline(((\"scaler\", StandardScaler()) ,\n",
+    "                                (\"svr\",SVR(kernel=\"poly\") )))\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Defining various Hyperparameter Search functions"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 25,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def SVM_Linear_hyperparam_select(X, y, nfolds, input_pipe):\n",
+    "    C_vals      = np.logspace(-3,3,7)\n",
+    "    param_grid  = dict(svr__C=C_vals)\n",
+    "    grid_search = GridSearchCV(input_pipe, param_grid, cv=nfolds, verbose=1)\n",
+    "    grid_search.fit(X, y)\n",
+    "    return grid_search.best_params_\n",
+    "\n",
+    "def SVM_RBF_hyperparam_select(X, y, nfolds,input_pipe):\n",
+    "    C_vals      = np.logspace(-2,2,5)\n",
+    "    gamma_vals  = np.logspace(-2,2, 5)\n",
+    "    param_grid  = dict(svr__gamma=gamma_vals, svr__C=C_vals)\n",
+    "    grid_search = GridSearchCV(input_pipe, param_grid, cv=nfolds, verbose=1)\n",
+    "    grid_search.fit(X, y)\n",
+    "    return grid_search.best_params_\n",
+    "\n",
+    "def SVM_poly_hyperparam_select(X, y, nfolds, input_pipe):\n",
+    "    C_vals      = np.logspace(-1,1,3)\n",
+    "    d_vals      = [1,2]\n",
+    "    param_grid  = dict(svr__C=C_vals, svr__degree=d_vals)\n",
+    "    grid_search = GridSearchCV(input_pipe, param_grid, cv=nfolds, verbose=1)\n",
+    "    grid_search.fit(X, y)\n",
+    "    return grid_search.best_params_\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Hyperparameter Tuning for SVR with Linear Kernel"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 26,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Fitting 5 folds for each of 7 candidates, totalling 35 fits\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.\n",
+      "[Parallel(n_jobs=1)]: Done  35 out of  35 | elapsed:  3.6min finished\n"
+     ]
+    }
+   ],
+   "source": [
+    "linear_hyperparams_selected  = SVM_Linear_hyperparam_select(X_train,y_train,5, svm_pipe_linear)\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Fit SVR with Linear Kernel"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 28,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "svm_pipe_linear.set_params(**linear_hyperparams_selected)\n",
+    "svm_pipe_linear.fit(X_train,y_train)\n",
+    "y_predict      = svm_pipe_linear.predict(X_test)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Compute RMSE and MAPE"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 29,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>SVM Linear</th>\n",
+       "      <th>Randomwalk</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>RMSE</th>\n",
+       "      <td>0.001948</td>\n",
+       "      <td>0.007146</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>MAPE</th>\n",
+       "      <td>0.020133</td>\n",
+       "      <td>0.049001</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "      SVM Linear  Randomwalk\n",
+       "RMSE    0.001948    0.007146\n",
+       "MAPE    0.020133    0.049001"
+      ]
+     },
+     "execution_count": 29,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "## Computing Mean Squared Error\n",
+    "svm_rmse =mean_squared_error(y_predict, y_test)\n",
+    "svm_rmse_rwalk = mean_squared_error(y_rwalk_test, y_test)\n",
+    "\n",
+    "## Computing Mean Absolute Error\n",
+    "svm_mape = mean_absolute_error(y_predict, y_test)\n",
+    "svm_mape_rwalk = mean_absolute_error(y_rwalk_test, y_test)\n",
+    "\n",
+    "results = pd.DataFrame(np.array([[svm_rmse, svm_rmse_rwalk],[svm_mape,svm_mape_rwalk]]))\n",
+    "results.columns = ['SVM Linear', 'Randomwalk']\n",
+    "results.index=['RMSE','MAPE']\n",
+    "results"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Hyperparameter Tuning for SVR with Polynomial Kernel"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "poly_hyperparams_selected  = SVM_Linear_hyperparam_select(X_train,y_train,5, svm_pipe_poly)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Fit SVR with Linear Kernel"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "svm_pipe_poly.set_params(**poly_hyperparams_selected)\n",
+    "svm_pipe_poly.fit(X_train,y_train)\n",
+    "y_predict      = svm_pipe_poly.predict(X_test)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Compute RMSE and MAPE"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "## Computing Mean Squared Error\n",
+    "svm_rmse =mean_squared_error(y_predict, y_test)\n",
+    "svm_rmse_rwalk = mean_squared_error(y_rwalk_test, y_test)\n",
+    "\n",
+    "## Computing Mean Absolute Error\n",
+    "svm_mape = mean_absolute_error(y_predict, y_test)\n",
+    "svm_mape_rwalk = mean_absolute_error(y_rwalk_test, y_test)\n",
+    "\n",
+    "results = pd.DataFrame(np.array([[svm_rmse, svm_rmse_rwalk],[svm_mape,svm_mape_rwalk]]))\n",
+    "results.columns = ['SVM Linear', 'Randomwalk']\n",
+    "results.index=['RMSE','MAPE']\n",
+    "results"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Hyperparameter Tuning for SVR with Radial Basis  Kernel"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "rbf_hyperparams_selected     = SVM_RBF_hyperparam_select(X_train,y_train,5, svm_pipe_rbf)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Fit SVR with Linear Kernel"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "svm_pipe_rbf.set_params(**rbf_hyperparams_selected)\n",
+    "svm_pipe_rbf.fit(X_train,y_train)\n",
+    "y_predict      = svm_pipe_rbf.predict(X_test)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Compute RMSE and MAPE"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "## Computing Mean Squared Error\n",
+    "svm_rmse =mean_squared_error(y_predict, y_test)\n",
+    "svm_rmse_rwalk = mean_squared_error(y_rwalk_test, y_test)\n",
+    "\n",
+    "## Computing Mean Absolute Error\n",
+    "svm_mape = mean_absolute_error(y_predict, y_test)\n",
+    "svm_mape_rwalk = mean_absolute_error(y_rwalk_test, y_test)\n",
+    "\n",
+    "results = pd.DataFrame(np.array([[svm_rmse, svm_rmse_rwalk],[svm_mape,svm_mape_rwalk]]))\n",
+    "results.columns = ['SVM Linear', 'Randomwalk']\n",
+    "results.index=['RMSE','MAPE']"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.7.2"
+  },
+  "toc": {
+   "base_numbering": 1,
+   "nav_menu": {},
+   "number_sections": true,
+   "sideBar": true,
+   "skip_h1_title": false,
+   "title_cell": "Table of Contents",
+   "title_sidebar": "Contents",
+   "toc_cell": false,
+   "toc_position": {},
+   "toc_section_display": true,
+   "toc_window_display": false
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2
+}
